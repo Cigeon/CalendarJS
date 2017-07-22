@@ -71,6 +71,13 @@
 	</head>
 	<body>
 		<div id="calendar"></div>
+		<div class="ui modal"><div class="header"></div>
+			<div class="scrolling content">
+				<p></p>
+				<p></p>
+				<p></p>
+			</div>
+		</div>;
 		<script>
 			/* Calendar */
 			class Calendar {
@@ -78,6 +85,7 @@
 					this.element = element;
 					this.locale = locale;
                     this.events = events;
+					this.groups = _.groupBy(events, 'date');
 					this.callback = callback;
 					moment.locale(locale);
 					this.show(moment().year());
@@ -100,28 +108,28 @@
 					this.element.innerHTML = '<nav><a href="#" class="nav prev" draggable="false"><svg viewBox="0 0 512 512"><path d="M189.8,349.7c3.1-3.1,3-8,0-11.3L123.4,264H408c4.4,0,8-3.6,8-8c0-4.4-3.6-8-8-8H123.4l66.3-74.4c2.9-3.4,3.2-8.1,0.1-11.2c-3.1-3.1-8.5-3.3-11.4-0.1c0,0-79.2,87-80,88S96,253.1,96,256s1.6,4.9,2.4,5.7s80,88,80,88c1.5,1.5,3.6,2.3,5.7,2.3C186.2,352,188.2,351.2,189.8,349.7z"/></svg></a><div class="title"><strong>' + year + '</strong></div><a href="#" class="nav next" draggable="false"><svg viewBox="0 0 512 512"><path d="M322.2,349.7c-3.1-3.1-3-8,0-11.3l66.4-74.4H104c-4.4,0-8-3.6-8-8c0-4.4,3.6-8,8-8h284.6l-66.3-74.4c-2.9-3.4-3.2-8.1-0.1-11.2c3.1-3.1,8.5-3.3,11.4-0.1c0,0,79.2,87,80,88s2.4,2.8,2.4,5.7s-1.6,4.9-2.4,5.7s-80,88-80,88c-1.5,1.5-3.6,2.3-5.7,2.3C325.8,352,323.8,351.2,322.2,349.7z"/></svg></a></nav><div class="YYYY" data-w="' + r + '">' + y + '</div>';
 					this.element.querySelector('.prev').addEventListener('click', () => { this.show(--this.year); });
 					this.element.querySelector('.next').addEventListener('click', () => { this.show(++this.year); });
-					// group events by date
-					var groups = _.groupBy(this.events, 'date');
+					/* Add icons for all events */
 					this.element.querySelectorAll('.D').forEach((element) => {
-						for(var prop in groups) {
+						for(var prop in this.groups) {
 							if(element.getAttribute('data-date') == prop) {								
-								// get list of events
-								var list = groups[prop].map(function(a) {return a.event;});
-								element.innerHTML += '<i class="circle icon" data-content="' + list.join(' | ') + '" style="padding-top: 15%; color: coral;"></i>';								
+								/* get list of events */
+								var list = this.groups[prop].map(function(a) {return a.event;});
+								/* inject icon to date element */
+								element.innerHTML += '<i class="circle icon" date="'+ prop + '" data-content="' + list.join(' | ') + '" style="padding-top: 15%; color: coral;"></i>';								
 							}
 						}
 					});
-
-                    /* Mark days with events */   
-                    /*this.events.forEach((e) => {                       
-                        document.querySelector('[data-date="' + e.date + '"]')
-                                .innerHTML += '<i class="circle icon" data-content="' + e.event + '" style="padding-top: 15%; color: aquamarine;"></i>';
-                    }); */
-
+					/* Add modal */
+					this.element.querySelectorAll('.circle.icon').forEach(element => element.addEventListener('click', () => { 
+						$('.ui.modal').modal({
+							onShow: function() {
+								$('.header').text('Events today');
+							}
+						}).modal('show'); }));
                     /* Add popup for each event */
                     $('.circle.icon').popup({
                         position: 'bottom center'
-                    })
+                    });
 				}
 			}
 			
@@ -149,32 +157,6 @@
                     avatar: "https://scontent-cdt1-1.xx.fbcdn.net/v/t1.0-9/19959082_10210721389766187_6789533543778955899_n.jpg?oh=204032e8f826891d02c566e5cdcdf384&oe=59C40BCC"
                 }]
             }];
-
-			function groupBy(collection, property) {
-				var i = 0, val, index,
-					values = [], result = [];
-				for (; i < collection.length; i++) {
-					val = collection[i][property];
-					index = values.indexOf(val);
-					//result[index][property] = val;
-					if (index > -1) {
-						result[index].push(collection[i]);
-						result[index][property] = val;
-					}
-					else {
-						values.push(val);
-						result.push([collection[i]]);
-
-					}
-				}
-				return result;
-			}
-
-			//var obj = groupBy(events, "date");
-			//console.log(_.groupBy(events, 'date'));
-
-
-
 
 			new Calendar(document.getElementById('calendar'), 'en', events, function(date) {
 				alert(date);
