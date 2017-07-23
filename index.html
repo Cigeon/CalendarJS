@@ -72,11 +72,7 @@
 	<body>
 		<div id="calendar"></div>
 		<div class="ui modal"><div class="header"></div>
-			<div class="scrolling content">
-				<p></p>
-				<p></p>
-				<p></p>
-			</div>
+			<div class="scrolling content"></div>
 		</div>;
 		<script>
 			/* Calendar */
@@ -115,16 +111,37 @@
 								/* get list of events */
 								var list = this.groups[prop].map(function(a) {return a.event;});
 								/* inject icon to date element */
-								element.innerHTML += '<i class="circle icon" date="'+ prop + '" data-content="' + list.join(' | ') + '" style="padding-top: 15%; color: coral;"></i>';								
+								element.innerHTML += '<i class="circle icon" date="'+ prop + '" data-content="' + list.join(' | ') + '" style="padding-top: 12%; color: coral;"></i>';								
 							}
 						}
 					});
 					/* Add modal */
 					this.element.querySelectorAll('.circle.icon').forEach(element => element.addEventListener('click', () => { 
-						$('.ui.modal').modal({
-							onShow: function() {
-								$('.header').text('Events today');
-							}
+						$('.ui.modal').modal({				
+							onShow: function(groups) {
+								var date = element.getAttribute('date');							
+								$('.header').text(date);
+								var list = groups[date];
+								var content = "";
+								for(var i in list) {
+									content += '<h4>' + list[i].event + '</h4>';
+									content += '<p>' + list[i].description + '</p>';
+									if(list[i].participants) {
+										var participants = list[i].participants
+										content += '<p>Participants (' + participants.length + ')</p>';
+										content += '<div style="display: flex">'										
+										for(var j in participants) {
+											content += '<div style="padding: 5px; text-overflow: ellipsis;">'
+											content += '<img src="' + participants[j].avatar + '" style="width: 128px"></img>';											
+											content += '<p>' + participants[j].name + '</p>';
+											content += '</div>'											
+										}
+										content += '</div>'										
+									}
+								}
+								$('.scrolling.content').html(content);
+
+							}(this.groups)
 						}).modal('show'); }));
                     /* Add popup for each event */
                     $('.circle.icon').popup({
@@ -135,27 +152,52 @@
 			
             /* List of events */
             var events = [{
-                date: "2017-07-20",
+                date: "2017-07-26",
                 eventId: 0,
-                event: "Come up with a homework idea",
-                description: "Well, yeah, you know. You've got to engage the audience, inspire them to do something if not great than warm at least. Something you'll be glad to check on later."
+                event: "EPAM Kyiv open JS-community meetup: Angular 2+ / WebComponents",
+                description: "На встрече будет представлено 2 доклада: „19:00 — 20:00 Using WebComponents from now on” и „Angular 2+: long-lived architecture”.",
+				participants: [{
+                    name: "Александр Земляненко",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_1_6MzUkzY.jpg"
+                },
+				{
+					name: "Kostyantyn Chetvernya",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_104611.jpg"
+				},
+				{
+					name: "Sergey Perekrestov",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_106303.jpg"
+				}]
             },
             {
-                date: "2017-07-21",
-                eventId: 0,
-                event: "Parent's birthday",
-                description: "Yeah, both of them. Mom wanted a new bag — have no idea where to get one. Zara? Will see. Anyway, yeah, both of them, same day. Have to check those homeworks though."
-            },
-            {
-                date: "2017-07-21",
+                date: "2017-07-27",
                 eventId: 1,
-                event: "Friends' party",
-                description: "Go see some friends since you're visiting Ternopil, grab some beer, talk about life and how everything is shit.",
+                event: "Встреча для будущих fullstack-разработчиков и воркшоп «Портрет идеального junior developer и реалии современного IT рынка»",
+                description: "Мы пригласили несколько специальных гостей из сферы рекрутинга, которые на мероприятии поделятся лайфхаками и ценной информацией о том, какие скиллы нужны, чтобы стать кандидатом мечты."
+            },
+            {
+                date: "2017-07-28",
+                eventId: 2,
+                event: "React Kyiv July Meetup",
+                description: "На встрече планируется 3 доклада: „Code speed — what you really forgot or do not use?”, \" Baobab. What if I told you that you can choose not just Redux or MobX\" и „18k visible components + canvas = 60 FPS or How we created browser inside browser”.",
                 participants: [{
-                    name: "Volodymyr Stoyko",
-                    url: "https://www.facebook.com/corest",
-                    avatar: "https://scontent-cdt1-1.xx.fbcdn.net/v/t1.0-9/19959082_10210721389766187_6789533543778955899_n.jpg?oh=204032e8f826891d02c566e5cdcdf384&oe=59C40BCC"
-                }]
+                    name: "Maxim Bordyuzha",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_126766.jpg"
+                },
+				{
+					name: "Alexandra Imereli",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_197232.jpg"
+				},
+				{
+					name: "Serhiy Popaduk",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_190545.jpg"
+				}]
             }];
 
 			new Calendar(document.getElementById('calendar'), 'en', events, function(date) {
