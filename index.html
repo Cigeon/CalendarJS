@@ -18,6 +18,8 @@
 		<link href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&amp;subset=latin-ext" rel="stylesheet">
 		<!-- OpenSans -->
 		<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i&amp;subset=cyrillic,cyrillic-ext,greek,greek-ext,latin-ext,vietnamese" rel="stylesheet">
+		<!-- Underscore -->
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>		
 		<!-- Calendar -->
 		<style>
 			/* Calendar */
@@ -63,16 +65,23 @@
 								#calendar > .YYYY > .M > .MM > .D:first-child[data-d="6"] { margin-left: calc(((100% + 6px) / 7) * 6 - 6px); }
 								#calendar > .YYYY > .M > .MM > .D > .num { position: absolute; font-size: 11px; top: 0px; left: 4px; }
 								#calendar > .YYYY > .M > .MM > .D:hover > .num { font-weight: 700; }
+
+            .red { background: red; }
 		</style>
 	</head>
 	<body>
 		<div id="calendar"></div>
+		<div class="ui modal"><div class="header"></div>
+			<div class="scrolling content"></div>
+		</div>;
 		<script>
 			/* Calendar */
 			class Calendar {
-				constructor(element, locale, callback) {
+				constructor(element, locale, events, callback) {
 					this.element = element;
 					this.locale = locale;
+                    this.events = events;
+					this.groups = _.groupBy(events, 'date');
 					this.callback = callback;
 					moment.locale(locale);
 					this.show(moment().year());
@@ -95,11 +104,103 @@
 					this.element.innerHTML = '<nav><a href="#" class="nav prev" draggable="false"><svg viewBox="0 0 512 512"><path d="M189.8,349.7c3.1-3.1,3-8,0-11.3L123.4,264H408c4.4,0,8-3.6,8-8c0-4.4-3.6-8-8-8H123.4l66.3-74.4c2.9-3.4,3.2-8.1,0.1-11.2c-3.1-3.1-8.5-3.3-11.4-0.1c0,0-79.2,87-80,88S96,253.1,96,256s1.6,4.9,2.4,5.7s80,88,80,88c1.5,1.5,3.6,2.3,5.7,2.3C186.2,352,188.2,351.2,189.8,349.7z"/></svg></a><div class="title"><strong>' + year + '</strong></div><a href="#" class="nav next" draggable="false"><svg viewBox="0 0 512 512"><path d="M322.2,349.7c-3.1-3.1-3-8,0-11.3l66.4-74.4H104c-4.4,0-8-3.6-8-8c0-4.4,3.6-8,8-8h284.6l-66.3-74.4c-2.9-3.4-3.2-8.1-0.1-11.2c3.1-3.1,8.5-3.3,11.4-0.1c0,0,79.2,87,80,88s2.4,2.8,2.4,5.7s-1.6,4.9-2.4,5.7s-80,88-80,88c-1.5,1.5-3.6,2.3-5.7,2.3C325.8,352,323.8,351.2,322.2,349.7z"/></svg></a></nav><div class="YYYY" data-w="' + r + '">' + y + '</div>';
 					this.element.querySelector('.prev').addEventListener('click', () => { this.show(--this.year); });
 					this.element.querySelector('.next').addEventListener('click', () => { this.show(++this.year); });
-					this.element.querySelectorAll('.D').forEach((element) => element.addEventListener('click', (event) => { this.callback(event.target.getAttribute('data-date')); }));
+					/* Add icons for all events */
+					this.element.querySelectorAll('.D').forEach((element) => {
+						for(var prop in this.groups) {
+							if(element.getAttribute('data-date') == prop) {								
+								/* get list of events */
+								var list = this.groups[prop].map(function(a) {return a.event;});
+								/* inject icon to date element */
+								element.innerHTML += '<i class="circle icon" date="'+ prop + '" data-content="' + list.join(' | ') + '" style="padding-top: 12%; color: coral;"></i>';								
+							}
+						}
+					});
+					/* Add modal */
+					this.element.querySelectorAll('.circle.icon').forEach(element => element.addEventListener('click', () => { 
+						$('.ui.modal').modal({				
+							onShow: function(groups) {
+								var date = element.getAttribute('date');							
+								$('.header').text(date);
+								var list = groups[date];
+								var content = "";
+								for(var i in list) {
+									content += '<h4>' + list[i].event + '</h4>';
+									content += '<p>' + list[i].description + '</p>';
+									if(list[i].participants) {
+										var participants = list[i].participants
+										content += '<p>Participants (' + participants.length + ')</p>';
+										content += '<div style="display: flex">'										
+										for(var j in participants) {
+											content += '<div style="padding: 5px; text-overflow: ellipsis;">'
+											content += '<img src="' + participants[j].avatar + '" style="width: 128px"></img>';											
+											content += '<p>' + participants[j].name + '</p>';
+											content += '</div>'											
+										}
+										content += '</div>'										
+									}
+								}
+								$('.scrolling.content').html(content);
+
+							}(this.groups)
+						}).modal('show'); }));
+                    /* Add popup for each event */
+                    $('.circle.icon').popup({
+                        position: 'bottom center'
+                    });
 				}
 			}
 			
-			new Calendar(document.getElementById('calendar'), 'en', function(date) {
+            /* List of events */
+            var events = [{
+                date: "2017-07-26",
+                eventId: 0,
+                event: "EPAM Kyiv open JS-community meetup: Angular 2+ / WebComponents",
+                description: "На встрече будет представлено 2 доклада: „19:00 — 20:00 Using WebComponents from now on” и „Angular 2+: long-lived architecture”.",
+				participants: [{
+                    name: "Александр Земляненко",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_1_6MzUkzY.jpg"
+                },
+				{
+					name: "Kostyantyn Chetvernya",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_104611.jpg"
+				},
+				{
+					name: "Sergey Perekrestov",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_106303.jpg"
+				}]
+            },
+            {
+                date: "2017-07-27",
+                eventId: 1,
+                event: "Встреча для будущих fullstack-разработчиков и воркшоп «Портрет идеального junior developer и реалии современного IT рынка»",
+                description: "Мы пригласили несколько специальных гостей из сферы рекрутинга, которые на мероприятии поделятся лайфхаками и ценной информацией о том, какие скиллы нужны, чтобы стать кандидатом мечты."
+            },
+            {
+                date: "2017-07-28",
+                eventId: 2,
+                event: "React Kyiv July Meetup",
+                description: "На встрече планируется 3 доклада: „Code speed — what you really forgot or do not use?”, \" Baobab. What if I told you that you can choose not just Redux or MobX\" и „18k visible components + canvas = 60 FPS or How we created browser inside browser”.",
+                participants: [{
+                    name: "Maxim Bordyuzha",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_126766.jpg"
+                },
+				{
+					name: "Alexandra Imereli",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_197232.jpg"
+				},
+				{
+					name: "Serhiy Popaduk",
+                    url: "",
+                    avatar: "https://s.dou.ua/img/avatars/100x100_190545.jpg"
+				}]
+            }];
+
+			new Calendar(document.getElementById('calendar'), 'en', events, function(date) {
 				alert(date);
 			});
 		</script>
